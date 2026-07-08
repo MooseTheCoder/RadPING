@@ -66,6 +66,13 @@ function createWindow() {
     }
   });
 
+  // Hide the in-window menu bar on Windows/Linux (macOS keeps its global menu
+  // bar, which is expected there). The menu is left set so its keyboard
+  // shortcuts still work; autoHideMenuBar stays false so Alt won't reveal it.
+  if (process.platform !== 'darwin') {
+    mainWindow.setMenuBarVisibility(false);
+  }
+
   mainWindow.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
 
   mainWindow.on('closed', () => {

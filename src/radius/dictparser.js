@@ -161,12 +161,24 @@ function mapType(t) {
     case 'ipaddr':
     case 'ipv4addr':
       return 'ipaddr';
+    // Integer family. Legacy FreeRADIUS names (integer, byte, short) and the
+    // modern fixed-width names (uint8/16/32/64, int8/16/32/64) all decode as
+    // an unsigned integer of their byte width.
     case 'integer':
     case 'integer64':
     case 'byte':
     case 'short':
     case 'signed':
     case 'time_delta':
+    case 'bool':
+    case 'uint8':
+    case 'uint16':
+    case 'uint32':
+    case 'uint64':
+    case 'int8':
+    case 'int16':
+    case 'int32':
+    case 'int64':
       return 'integer';
     case 'date':
       return 'date';

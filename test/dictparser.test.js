@@ -109,6 +109,32 @@ ok('collects warnings but does not throw on junk', () => {
   assert.strictEqual(r.vendorCount, 0);
 });
 
+ok('modern uintN / intN types decode as integers, not raw hex', () => {
+  const r = parseDictionary(`
+VENDOR Widget 6527
+BEGIN-VENDOR Widget
+ATTRIBUTE Access-Profile-ID 53 uint32
+ATTRIBUTE Widget-Flag      54 uint8
+ATTRIBUTE Widget-Counter   55 uint64
+END-VENDOR Widget
+`);
+  assert.strictEqual(r.vendors[6527].attributes[53].type, 'integer');
+  assert.strictEqual(r.vendors[6527].attributes[54].type, 'integer');
+  assert.strictEqual(r.vendors[6527].attributes[55].type, 'integer');
+
+  vendors.register(r.vendors);
+  const decode = (vType, hex) => {
+    const vid = Buffer.alloc(4); vid.writeUInt32BE(6527, 0);
+    const val = Buffer.from(hex, 'hex');
+    const sub = Buffer.concat([Buffer.from([vType, 2 + val.length]), val]);
+    return packet.decodeVsa(Buffer.concat([vid, sub]))[0].value;
+  };
+  assert.strictEqual(decode(53, '000001f3'), '499');          // uint32
+  assert.strictEqual(decode(54, '07'), '7');                  // uint8
+  assert.strictEqual(decode(55, '0000000100000000'), '4294967296'); // uint64
+  vendors.reset();
+});
+
 // --- register / reset round-trip against the live vendor set ---
 ok('register() makes an imported vendor decode by name; reset() removes it', () => {
   const r = parseDictionary(`

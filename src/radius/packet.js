@@ -249,10 +249,15 @@ function decodeTypedValue(name, type, value) {
       return value.length === 4 ? Array.from(value).join('.') : '0x' + value.toString('hex');
     case 'integer':
     case 'date': {
-      if (value.length === 4) {
-        const n = value.readUInt32BE(0);
+      // Decode unsigned integers of any standard width (1–4, 8 bytes) — a VSA
+      // may be uint8/uint16/uint32/uint64, not just the classic 4-byte integer.
+      if (value.length >= 1 && value.length <= 6) {
+        const n = value.readUIntBE(0, value.length);
         const named = dict.valueName(name, n);
         return named ? `${named} (${n})` : String(n);
+      }
+      if (value.length === 8) {
+        return value.readBigUInt64BE(0).toString();
       }
       return '0x' + value.toString('hex');
     }
