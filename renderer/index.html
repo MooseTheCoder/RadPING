@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self';"
+    />
+    <title>RadPING</title>
+    <link rel="icon" href="../assets/icon.png" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <!-- Title bar -->
+      <header class="titlebar">
+        <div class="titlebar__brand">
+          <span class="titlebar__name">RadPING</span>
+          <span class="titlebar__sep">—</span>
+          <span class="titlebar__desc">RADIUS Test Client</span>
+        </div>
+        <div class="titlebar__right">
+          <button type="button" class="btn btn--sm" id="dictBtn">Dictionaries</button>
+          <span class="titlebar__target" id="targetLabel">127.0.0.1:1812</span>
+        </div>
+      </header>
+
+      <main class="main">
+        <!-- ============ REQUEST ============ -->
+        <section class="pane pane--request" aria-label="Request">
+          <div class="pane__scroll">
+            <!-- Connection -->
+            <div class="section">
+              <div class="section__title">Connection</div>
+              <div class="form">
+                <div class="row profilebar">
+                  <label class="field field--grow">
+                    <span class="field__label">Server profile</span>
+                    <select id="profileSelect">
+                      <option value="">— No profile —</option>
+                    </select>
+                  </label>
+                  <button type="button" class="btn btn--sm" id="profileSave">Save…</button>
+                  <button type="button" class="btn btn--sm" id="profileDelete" disabled>Delete</button>
+                </div>
+                <div class="row">
+                  <label class="field field--grow">
+                    <span class="field__label">RADIUS server</span>
+                    <input id="server" type="text" value="127.0.0.1" spellcheck="false" autocomplete="off" />
+                  </label>
+                  <label class="field field--port">
+                    <span class="field__label">Port</span>
+                    <input id="port" type="number" value="1812" min="1" max="65535" />
+                  </label>
+                </div>
+                <div class="row">
+                  <label class="field field--grow">
+                    <span class="field__label">Shared secret</span>
+                    <div class="input-affix">
+                      <input id="secret" type="password" value="" spellcheck="false" autocomplete="off" />
+                      <button type="button" class="affix-btn" data-reveal="secret">Show</button>
+                    </div>
+                  </label>
+                </div>
+                <div class="row">
+                  <label class="field field--half">
+                    <span class="field__label">Timeout (sec)</span>
+                    <input id="timeout" type="number" value="5" min="1" max="120" />
+                  </label>
+                  <label class="field field--half">
+                    <span class="field__label">Retries</span>
+                    <input id="retries" type="number" value="0" min="0" max="10" />
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Request -->
+            <div class="section">
+              <div class="section__title">Request</div>
+              <div class="form">
+                <div class="row">
+                  <label class="field field--grow">
+                    <span class="field__label">Request type</span>
+                    <select id="requestType">
+                      <option value="auth" selected>Authentication Request</option>
+                      <option value="acct-start">Accounting Start</option>
+                      <option value="acct-stop">Accounting Stop</option>
+                      <option value="acct-interim">Accounting Interim-Update</option>
+                      <option value="acct-on">Accounting On</option>
+                      <option value="acct-off">Accounting Off</option>
+                    </select>
+                  </label>
+                  <label class="field field--half" id="authMethodField">
+                    <span class="field__label">Auth method</span>
+                    <select id="authMethod">
+                      <option value="pap" selected>PAP</option>
+                      <option value="chap">CHAP</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="row">
+                  <label class="field field--grow">
+                    <span class="field__label">User-Name</span>
+                    <input id="username" type="text" value="" spellcheck="false" autocomplete="off" />
+                  </label>
+                </div>
+                <div class="row" id="passwordRow">
+                  <label class="field field--grow">
+                    <span class="field__label">Password</span>
+                    <div class="input-affix">
+                      <input id="password" type="password" value="" spellcheck="false" autocomplete="off" />
+                      <button type="button" class="affix-btn" data-reveal="password">Show</button>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Additional attributes -->
+            <div class="section">
+              <div class="section__title">
+                Additional attributes
+                <button type="button" class="link-btn" id="addAttr">Add attribute</button>
+              </div>
+              <div class="attrs" id="attrList"></div>
+              <p class="hint" id="attrEmpty">
+                None. Add attributes such as NAS-IP-Address, NAS-Port, or Service-Type.
+              </p>
+            </div>
+          </div>
+
+          <div class="pane__actions">
+            <button type="button" class="btn" id="clearBtn">Clear</button>
+            <button type="button" class="btn btn--primary" id="sendBtn">
+              <span class="btn__spinner" aria-hidden="true"></span>
+              <span class="btn__label">Send Request</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- ============ RESPONSE ============ -->
+        <section class="pane pane--response" aria-label="Response">
+          <div class="pane__scroll">
+            <!-- Result header -->
+            <div class="result" id="result" data-state="idle">
+              <div class="result__head">
+                <span class="result__dot" aria-hidden="true"></span>
+                <span class="result__code" id="resultCode">No response yet</span>
+              </div>
+              <div class="result__meta" id="resultMeta">
+                <span class="hint">Configure a request and click Send Request.</span>
+              </div>
+            </div>
+
+            <!-- Reply attributes -->
+            <div class="section section--flush">
+              <div class="section__title">Reply attributes <span class="count" id="attrCount"></span></div>
+              <div class="table-wrap">
+                <table class="attr-table" id="replyTable">
+                  <thead>
+                    <tr>
+                      <th class="col-name">Attribute</th>
+                      <th class="col-id">ID</th>
+                      <th class="col-val">Value</th>
+                    </tr>
+                  </thead>
+                  <tbody id="replyBody">
+                    <tr class="empty-row" id="replyEmptyRow">
+                      <td colspan="3">Response attributes will appear here.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Raw packets -->
+            <details class="section section--flush raw" id="rawWrap">
+              <summary class="section__title">Raw packets</summary>
+              <div class="raw__grid">
+                <div class="raw__item">
+                  <div class="raw__label">Request</div>
+                  <pre id="rawReq" class="raw__hex">—</pre>
+                </div>
+                <div class="raw__item">
+                  <div class="raw__label">Response</div>
+                  <pre id="rawResp" class="raw__hex">—</pre>
+                </div>
+                <div class="raw__item" id="attemptsItem" hidden>
+                  <div class="raw__label">Attempts</div>
+                  <pre id="attemptsLog" class="raw__hex">—</pre>
+                </div>
+              </div>
+            </details>
+          </div>
+        </section>
+      </main>
+
+      <footer class="statusbar">
+        <span id="statusMsg">Ready</span>
+        <span class="statusbar__spacer"></span>
+        <span class="statusbar__dim">RadPING v0.1</span>
+      </footer>
+    </div>
+
+    <!-- Modal (naming a profile / confirming a delete) -->
+    <div class="modal-overlay" id="modalOverlay" hidden>
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal__title" id="modalTitle">Save profile</div>
+        <p class="modal__message" id="modalMessage" hidden></p>
+        <label class="field modal__field" id="modalField">
+          <span class="field__label" id="modalLabel">Profile name</span>
+          <input id="modalInput" type="text" spellcheck="false" autocomplete="off" />
+        </label>
+        <div class="modal__actions">
+          <button type="button" class="btn" id="modalCancel">Cancel</button>
+          <button type="button" class="btn btn--primary" id="modalOk">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vendor dictionaries manager -->
+    <div class="modal-overlay" id="dictOverlay" hidden>
+      <div class="modal modal--wide" role="dialog" aria-modal="true" aria-labelledby="dictTitle">
+        <div class="modal__title" id="dictTitle">Vendor dictionaries</div>
+        <p class="modal__message">
+          Import FreeRADIUS-format dictionary files to decode Vendor-Specific
+          Attributes from more vendors. Imported dictionaries persist and reload
+          on launch.
+        </p>
+
+        <div class="dict-builtins">
+          <span class="dict-builtins__label">Built-in</span>
+          <span id="dictBuiltins" class="dict-builtins__list">—</span>
+        </div>
+
+        <div class="dict-list" id="dictList"></div>
+        <p class="hint" id="dictEmpty">No dictionaries imported yet.</p>
+        <p class="dict-warn" id="dictWarn" hidden></p>
+
+        <div class="modal__actions modal__actions--split">
+          <button type="button" class="btn btn--primary" id="dictImport">Import dictionary…</button>
+          <button type="button" class="btn" id="dictClose">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dictionary row template -->
+    <template id="dictRowTpl">
+      <div class="dict-row">
+        <div class="dict-row__info">
+          <span class="dict-row__name"></span>
+          <span class="dict-row__meta"></span>
+        </div>
+        <button type="button" class="dict-row__del" aria-label="Remove dictionary" title="Remove">✕</button>
+      </div>
+    </template>
+
+    <!-- Attribute row template -->
+    <template id="attrRowTpl">
+      <div class="attr-row">
+        <select class="attr-row__name"></select>
+        <input class="attr-row__value" type="text" placeholder="Value" spellcheck="false" autocomplete="off" />
+        <button type="button" class="attr-row__del" aria-label="Remove attribute" title="Remove">✕</button>
+      </div>
+    </template>
+
+    <script src="app.js"></script>
+  </body>
+</html>
