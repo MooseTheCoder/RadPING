@@ -21,6 +21,10 @@
           <span class="titlebar__desc">RADIUS Test Client</span>
         </div>
         <div class="titlebar__right">
+          <button type="button" class="update-chip" id="updateChip" hidden>
+            <span class="update-chip__dot" aria-hidden="true"></span>
+            <span id="updateChipLabel">Update available</span>
+          </button>
           <button type="button" class="btn btn--sm" id="dictBtn">Dictionaries</button>
           <span class="titlebar__target" id="targetLabel">127.0.0.1:1812</span>
         </div>
@@ -200,7 +204,7 @@
       <footer class="statusbar">
         <span id="statusMsg">Ready</span>
         <span class="statusbar__spacer"></span>
-        <span class="statusbar__dim">RadPING v0.1</span>
+        <span class="statusbar__dim" id="appVersion">RadPING</span>
       </footer>
     </div>
 
