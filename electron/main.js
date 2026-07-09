@@ -1,14 +1,20 @@
 'use strict';
 
-const { app, BrowserWindow, ipcMain, Menu, dialog, safeStorage } = require('electron');
+const { app, BrowserWindow, ipcMain, Menu, dialog, shell, safeStorage } = require('electron');
 const fs = require('fs');
 const path = require('path');
+const https = require('https');
 const client = require('../src/radius/client');
 const dict = require('../src/radius/dictionary');
 const vendors = require('../src/radius/vendors');
 const { parseDictionary } = require('../src/radius/dictparser');
 const { createProfileStore } = require('../src/store/profiles');
 const { createDictionaryStore } = require('../src/store/dictionaries');
+const { isNewer, normalize } = require('../src/util/version');
+
+// Where releases live. Used for the update check and the "view release" link.
+const GITHUB_REPO = 'MooseTheCoder/RadPING';
+const RELEASES_PAGE = `https://github.com/${GITHUB_REPO}/releases`;
 
 let mainWindow = null;
 let profileStore = null;
@@ -190,6 +196,88 @@ ipcMain.handle('dictionaries:remove', async (_event, id) => {
   const res = dictionaryStore.remove(id);
   applyStoredDictionaries();
   return res;
+});
+
+// --- IPC: update check (GitHub Releases) ------------------------------------
+function httpsGetJson(url, redirectsLeft = 3) {
+  return new Promise((resolve, reject) => {
+    const req = https.get(
+      url,
+      {
+        headers: {
+          'User-Agent': `RadPING/${app.getVersion()}`,
+          Accept: 'application/vnd.github+json'
+        },
+        timeout: 8000
+      },
+      (res) => {
+        const { statusCode, headers } = res;
+        if ([301, 302, 307, 308].includes(statusCode) && headers.location && redirectsLeft > 0) {
+          res.resume();
+          return resolve(httpsGetJson(headers.location, redirectsLeft - 1));
+        }
+        if (statusCode !== 200) {
+          res.resume();
+          return reject(new Error(`GitHub returned HTTP ${statusCode}`));
+        }
+        let data = '';
+        res.setEncoding('utf8');
+        res.on('data', (chunk) => (data += chunk));
+        res.on('end', () => {
+          try {
+            resolve(JSON.parse(data));
+          } catch (err) {
+            reject(new Error('Malformed response from GitHub'));
+          }
+        });
+      }
+    );
+    req.on('timeout', () => req.destroy(new Error('Update check timed out')));
+    req.on('error', reject);
+  });
+}
+
+async function checkForUpdate() {
+  const current = app.getVersion();
+  const latest = await httpsGetJson(
+    `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`
+  );
+  const tag = (latest && latest.tag_name) || '';
+  const latestVersion = normalize(tag);
+  return {
+    updateAvailable: latestVersion ? isNewer(latestVersion, current) : false,
+    currentVersion: current,
+    latestVersion,
+    releaseName: (latest && latest.name) || tag,
+    releaseUrl: (latest && latest.html_url) || RELEASES_PAGE
+  };
+}
+
+// Only ever open our own releases pages externally, never an arbitrary URL.
+function isTrustedReleaseUrl(url) {
+  try {
+    const u = new URL(String(url));
+    return (
+      u.protocol === 'https:' &&
+      u.hostname === 'github.com' &&
+      u.pathname.startsWith(`/${GITHUB_REPO}`)
+    );
+  } catch (_) {
+    return false;
+  }
+}
+
+ipcMain.handle('update:check', async () => {
+  try {
+    return await checkForUpdate();
+  } catch (err) {
+    return { updateAvailable: false, error: err && err.message ? err.message : String(err) };
+  }
+});
+
+ipcMain.handle('update:openReleases', async (_event, url) => {
+  await shell.openExternal(isTrustedReleaseUrl(url) ? url : RELEASES_PAGE);
+  return { ok: true };
 });
 
 app.whenReady().then(() => {

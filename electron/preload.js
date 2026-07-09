@@ -15,5 +15,9 @@ contextBridge.exposeInMainWorld('radping', {
     list: () => ipcRenderer.invoke('dictionaries:list'),
     import: () => ipcRenderer.invoke('dictionaries:import'),
     remove: (id) => ipcRenderer.invoke('dictionaries:remove', id)
+  },
+  update: {
+    check: () => ipcRenderer.invoke('update:check'),
+    openReleases: (url) => ipcRenderer.invoke('update:openReleases', url)
   }
 });

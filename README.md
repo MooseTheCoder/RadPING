@@ -50,21 +50,25 @@ every returned attribute, decoded by name and type.
   encrypted at rest with the OS keychain (Keychain / DPAPI / libsecret).
 - **Free-form attributes** — add any standard attribute to a request from a
   built-in RFC 2865/2866 dictionary, with named enum values.
+- **Update notifications** — on launch, RadPING checks GitHub Releases and shows
+  an unobtrusive prompt when a newer version is available. It never downloads or
+  installs anything on its own — clicking it just opens the Releases page.
 
 ## Getting started
 
 ### Download
 
-Pre-built installers will be published on the **Releases** page. Until then,
-build from source below.
+Grab the latest build from the
+[**Releases**](https://github.com/MooseTheCoder/RadPING/releases) page, or build
+from source below.
 
 ### Build from source
 
 Requires [Node.js](https://nodejs.org/) 18 or newer.
 
 ```bash
-git clone https://github.com/<owner>/radping.git
-cd radping
+git clone https://github.com/MooseTheCoder/RadPING.git
+cd RadPING
 npm install
 npm start
 ```

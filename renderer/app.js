@@ -53,7 +53,9 @@ const els = {
   dictWarn: $('dictWarn'),
   dictImport: $('dictImport'),
   dictClose: $('dictClose'),
-  dictRowTpl: $('dictRowTpl')
+  dictRowTpl: $('dictRowTpl'),
+  updateChip: $('updateChip'),
+  updateChipLabel: $('updateChipLabel')
 };
 
 // Request-type → { code, acctStatus }
@@ -103,6 +105,11 @@ async function init() {
   els.dictOverlay.addEventListener('mousedown', (e) => {
     if (e.target === els.dictOverlay) closeDictModal();
   });
+
+  els.updateChip.addEventListener('click', () => {
+    window.radping.update.openReleases(els.updateChip.dataset.url || '');
+  });
+  checkForUpdate();
 
   document.querySelectorAll('.affix-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -596,6 +603,21 @@ function clearReply() {
 
 function setStatus(msg) {
   els.statusMsg.textContent = msg;
+}
+
+// ---------------------------------------------------------------- update check
+async function checkForUpdate() {
+  try {
+    const res = await window.radping.update.check();
+    if (!res || !res.updateAvailable) return;
+    els.updateChipLabel.textContent = `Update to v${res.latestVersion}`;
+    els.updateChip.dataset.url = res.releaseUrl || '';
+    els.updateChip.title =
+      `You're on v${res.currentVersion}. v${res.latestVersion} is available — click to view the release.`;
+    els.updateChip.hidden = false;
+  } catch (_) {
+    // Best-effort; stay silent if the check fails (offline, rate-limited, etc.).
+  }
 }
 
 function updateTarget() {

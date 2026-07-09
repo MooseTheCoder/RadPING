@@ -72,6 +72,30 @@ html, body {
 .titlebar__sep { color: var(--text-3); }
 .titlebar__desc { font-size: 12px; color: var(--text-2); }
 .titlebar__right { display: flex; align-items: center; gap: 10px; }
+
+/* "Update available" chip — shown only when a newer release exists */
+.update-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: #fff;
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  padding: 3px 11px;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+.update-chip:hover { background: var(--accent-700); border-color: var(--accent-700); }
+.update-chip[hidden] { display: none; }
+.update-chip__dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #fff;
+  animation: blink 1.6s ease-in-out infinite;
+}
 .titlebar__target {
   font-family: var(--mono);
   font-size: 12px;
