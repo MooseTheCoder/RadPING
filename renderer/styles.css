@@ -243,6 +243,8 @@ select {
   cursor: pointer;
 }
 .link-btn:hover { color: var(--accent-700); text-decoration: underline; }
+.link-btn.is-copied,
+.link-btn.is-copied:hover { color: var(--accept); text-decoration: none; cursor: default; }
 
 /* ---------------- Pane actions (footer) ---------------- */
 .pane__actions {
@@ -314,10 +316,13 @@ select {
   flex: 0 0 auto;
 }
 .result__code { font-size: 15px; font-weight: 600; color: var(--text); }
-.result__meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+/* min-height reserves one pill row so the banner keeps its size in the
+   "Sending…" state (which has no pills) and doesn't shift the UI. */
+.result__meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; min-height: 22px; }
 .meta-pill {
   font-family: var(--mono);
   font-size: 11.5px;
+  line-height: 16px;
   color: var(--text-2);
   background: var(--panel-2);
   border: 1px solid var(--border-2);

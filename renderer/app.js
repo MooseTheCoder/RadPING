@@ -28,6 +28,7 @@ const els = {
   resultMeta: $('resultMeta'),
   replyBody: $('replyBody'),
   attrCount: $('attrCount'),
+  copyResponse: $('copyResponse'),
   rawReq: $('rawReq'),
   rawResp: $('rawResp'),
   attemptsItem: $('attemptsItem'),
@@ -80,6 +81,10 @@ const CODE_STATE = {
 let dictionary = { attributes: [], values: {}, codes: {} };
 let profiles = [];
 
+// Last completed auth request/response, kept so the reply can be copied.
+let lastConfig = null;
+let lastResult = null;
+
 // ---------------------------------------------------------------- init
 async function init() {
   if (window.radping.version) {
@@ -95,6 +100,7 @@ async function init() {
   els.addAttr.addEventListener('click', () => addAttrRow());
   els.clearBtn.addEventListener('click', clearReply);
   els.sendBtn.addEventListener('click', send);
+  els.copyResponse.addEventListener('click', copyResponseDetails);
   els.requestType.addEventListener('change', onRequestTypeChange);
   els.server.addEventListener('input', updateTarget);
   els.port.addEventListener('input', updateTarget);
@@ -462,6 +468,7 @@ async function send() {
     attributes
   };
 
+  lastConfig = config;
   setSending(true);
   setResult('sending', 'Sending…', []);
   setStatus(`Sending ${dictionary.codes[config.code] || 'request'} to ${config.server}:${config.port} …`);
@@ -470,6 +477,8 @@ async function send() {
     const result = await window.radping.send(config);
     renderResult(result);
   } catch (err) {
+    lastResult = null;
+    updateCopyButton();
     setResult('error', 'Error', [{ text: err.message || String(err), kind: 'bad' }]);
     setStatus('Error: ' + (err.message || String(err)));
   } finally {
@@ -485,6 +494,9 @@ function setSending(on) {
 
 // ---------------------------------------------------------------- render
 function renderResult(result) {
+  lastResult = result;
+  updateCopyButton();
+
   if (!result) {
     setResult('error', 'No result', [{ text: 'The request returned nothing.', kind: 'bad' }]);
     return;
@@ -578,6 +590,65 @@ function renderAttempts(attempts) {
     .join('\n');
 }
 
+// ---------------------------------------------------------------- copy response
+// Show the "Copy details" button only for a completed Authentication Request
+// that got an Access-Accept or Access-Reject back.
+function updateCopyButton() {
+  const resp = lastResult && lastResult.ok ? lastResult.response : null;
+  const canCopy = !!(lastConfig && lastConfig.code === 1 && resp &&
+    (resp.code === 2 || resp.code === 3));
+  els.copyResponse.hidden = !canCopy;
+  // Drop any lingering "Copied!" state from a previous response.
+  clearTimeout(copyFeedbackTimer);
+  els.copyResponse.textContent = 'Copy details';
+  els.copyResponse.classList.remove('is-copied');
+}
+
+function buildResponseSummary() {
+  const c = lastConfig;
+  const resp = lastResult.response;
+  const attrs = resp.attributes || [];
+
+  const sentence =
+    `${c.server} using shared secret ${c.secret} provided an ${resp.codeName} ` +
+    `for User ${c.username} using password ${c.password}.`;
+
+  // A reject is just the outcome — no attributes block.
+  if (resp.code === 3) return sentence;
+
+  let text = `${sentence} The RADIUS server returned these attributes :\n\n`;
+  text += attrs.length
+    ? attrs.map((a) => `${a.name} - ${a.value}`).join('\n')
+    : '(none)';
+
+  return text;
+}
+
+let copyFeedbackTimer = null;
+
+async function copyResponseDetails() {
+  if (els.copyResponse.hidden) return;
+  try {
+    await navigator.clipboard.writeText(buildResponseSummary());
+    flashCopied('Copied!', 'Response details copied to clipboard.');
+  } catch (err) {
+    flashCopied('Copy failed', 'Could not copy to clipboard: ' + (err.message || String(err)));
+  }
+}
+
+// Briefly swap the button label to confirm the click landed.
+function flashCopied(label, status) {
+  const btn = els.copyResponse;
+  btn.textContent = label;
+  btn.classList.add('is-copied');
+  setStatus(status);
+  clearTimeout(copyFeedbackTimer);
+  copyFeedbackTimer = setTimeout(() => {
+    btn.textContent = 'Copy details';
+    btn.classList.remove('is-copied');
+  }, 1600);
+}
+
 // ---------------------------------------------------------------- result / status
 function setResult(state, code, pills) {
   els.result.dataset.state = state;
@@ -592,6 +663,9 @@ function setResult(state, code, pills) {
 }
 
 function clearReply() {
+  lastConfig = null;
+  lastResult = null;
+  els.copyResponse.hidden = true;
   els.result.dataset.state = 'idle';
   els.resultCode.textContent = 'No response yet';
   els.resultMeta.innerHTML = '<span class="hint">Configure a request and click Send Request.</span>';
