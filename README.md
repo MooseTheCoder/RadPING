@@ -72,10 +72,17 @@ npm start
 ### Package installers
 
 ```bash
-npm run dist:mac     # .dmg + .zip
-npm run dist:win     # NSIS installer
-npm run dist:linux   # AppImage + .deb
+npm run dist:mac           # .dmg + .zip (drag-to-run app)
+npm run dist:win           # NSIS installer + portable .exe
+npm run dist:win:portable  # portable .exe only
+npm run dist:linux         # AppImage (portable) + .deb
 ```
+
+The **portable** Windows build is a single self-contained `.exe` that runs with
+no installation. It keeps its settings in a `RadPING-data` folder next to the
+executable, so your server profiles and imported dictionaries travel with the app
+(e.g. on a USB stick) instead of living in `%APPDATA%`. The Linux **AppImage** and
+the macOS **.zip** are portable in the same spirit.
 
 ## Usage
 
