@@ -14,6 +14,15 @@ let mainWindow = null;
 let profileStore = null;
 let dictionaryStore = null;
 
+// Portable build: keep all app data (profiles, imported dictionaries) in a
+// folder next to the executable so settings travel with the app instead of
+// living in %APPDATA%. electron-builder's portable target exposes the launch
+// directory via PORTABLE_EXECUTABLE_DIR; it's undefined for installed/dev runs,
+// which keep the normal per-user data location. Must run before app 'ready'.
+if (process.env.PORTABLE_EXECUTABLE_DIR) {
+  app.setPath('userData', path.join(process.env.PORTABLE_EXECUTABLE_DIR, 'RadPING-data'));
+}
+
 /**
  * Re-apply the vendor dictionary layer: built-ins first, then every stored
  * imported dictionary. Called at startup and after any import/remove so the

@@ -12,6 +12,7 @@
     "dist": "electron-builder",
     "dist:mac": "electron-builder --mac",
     "dist:win": "electron-builder --win",
+    "dist:win:portable": "electron-builder --win portable",
     "dist:linux": "electron-builder --linux"
   },
   "devDependencies": {
@@ -38,8 +39,13 @@
     "win": {
       "icon": "assets/icon.png",
       "target": [
-        "nsis"
+        "nsis",
+        "portable"
       ]
+    },
+    "portable": {
+      "artifactName": "RadPING-${version}-portable.exe",
+      "requestExecutionLevel": "user"
     },
     "linux": {
       "icon": "assets/icon.png",
