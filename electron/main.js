@@ -14,14 +14,29 @@ let mainWindow = null;
 let profileStore = null;
 let dictionaryStore = null;
 
-// Portable build: keep all app data (profiles, imported dictionaries) in a
-// folder next to the executable so settings travel with the app instead of
-// living in %APPDATA%. electron-builder's portable target exposes the launch
-// directory via PORTABLE_EXECUTABLE_DIR; it's undefined for installed/dev runs,
-// which keep the normal per-user data location. Must run before app 'ready'.
-if (process.env.PORTABLE_EXECUTABLE_DIR) {
-  app.setPath('userData', path.join(process.env.PORTABLE_EXECUTABLE_DIR, 'RadPING-data'));
-}
+// Portable builds keep all app data (profiles, imported dictionaries) in a
+// `RadPING-data` folder next to the executable, so settings travel with the app
+// instead of living in %APPDATA%. Two portable shapes are supported:
+//   1. The self-extracting portable .exe — electron-builder sets
+//      PORTABLE_EXECUTABLE_DIR to the folder the .exe was launched from.
+//   2. The portable ZIP (an unpacked app folder, the pinnable option) — opt in
+//      by placing an empty file named `portable.txt` next to RadPING.exe.
+// Installed and dev runs match neither and keep the normal per-user location.
+// Must run before the app 'ready' event so the stores pick up the new path.
+(function configurePortableDataDir() {
+  let dataDir = null;
+  if (process.env.PORTABLE_EXECUTABLE_DIR) {
+    dataDir = path.join(process.env.PORTABLE_EXECUTABLE_DIR, 'RadPING-data');
+  } else {
+    try {
+      const exeDir = path.dirname(app.getPath('exe'));
+      if (fs.existsSync(path.join(exeDir, 'portable.txt'))) {
+        dataDir = path.join(exeDir, 'RadPING-data');
+      }
+    } catch (_) { /* fall back to the default location */ }
+  }
+  if (dataDir) app.setPath('userData', dataDir);
+})();
 
 /**
  * Re-apply the vendor dictionary layer: built-ins first, then every stored
