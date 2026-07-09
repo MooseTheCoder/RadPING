@@ -128,6 +128,11 @@ ipcMain.handle('radius:dictionary', async () => {
   };
 });
 
+// --- IPC: app version (synchronous, read once by the preload) ---------------
+ipcMain.on('app:get-version', (event) => {
+  event.returnValue = app.getVersion();
+});
+
 // --- IPC: RADIUS server profiles --------------------------------------------
 ipcMain.handle('profiles:list', async () => profileStore.list());
 ipcMain.handle('profiles:save', async (_event, profile) => profileStore.save(profile));

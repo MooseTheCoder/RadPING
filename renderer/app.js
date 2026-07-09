@@ -55,7 +55,8 @@ const els = {
   dictClose: $('dictClose'),
   dictRowTpl: $('dictRowTpl'),
   updateChip: $('updateChip'),
-  updateChipLabel: $('updateChipLabel')
+  updateChipLabel: $('updateChipLabel'),
+  appVersion: $('appVersion')
 };
 
 // Request-type → { code, acctStatus }
@@ -81,6 +82,10 @@ let profiles = [];
 
 // ---------------------------------------------------------------- init
 async function init() {
+  if (window.radping.version) {
+    els.appVersion.textContent = `RadPING v${window.radping.version}`;
+  }
+
   try {
     dictionary = await window.radping.getDictionary();
   } catch (err) {
