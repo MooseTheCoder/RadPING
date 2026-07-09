@@ -73,16 +73,27 @@ npm start
 
 ```bash
 npm run dist:mac           # .dmg + .zip (drag-to-run app)
-npm run dist:win           # NSIS installer + portable .exe
-npm run dist:win:portable  # portable .exe only
+npm run dist:win           # NSIS installer + portable folder (.zip) + portable .exe
+npm run dist:win:portable  # portable folder (.zip) only
 npm run dist:linux         # AppImage (portable) + .deb
 ```
 
-The **portable** Windows build is a single self-contained `.exe` that runs with
-no installation. It keeps its settings in a `RadPING-data` folder next to the
-executable, so your server profiles and imported dictionaries travel with the app
-(e.g. on a USB stick) instead of living in `%APPDATA%`. The Linux **AppImage** and
-the macOS **.zip** are portable in the same spirit.
+### Portable on Windows
+
+There are two portable shapes, for different needs:
+
+- **Portable folder (`.zip`) — recommended.** An unpacked app folder containing a
+  real, permanent `RadPING.exe`. Extract it anywhere (USB stick, network share),
+  run `RadPING.exe`, and **you can pin it to the taskbar** and it re-opens
+  reliably. To keep settings inside the folder, drop an empty file named
+  `portable.txt` next to `RadPING.exe`; RadPING then stores profiles and
+  dictionaries in a `RadPING-data` subfolder instead of `%APPDATA%`.
+- **Portable `.exe`.** A single self-extracting file — convenient to hand around,
+  and it stores its data next to itself automatically. Note it unpacks and runs
+  from a temporary folder, so it is **not suitable for pinning to the taskbar**
+  (Windows would pin the temporary path). Use the portable folder for that.
+
+The Linux **AppImage** and the macOS **.zip** are portable in the same spirit.
 
 ## Usage
 
